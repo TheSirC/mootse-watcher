@@ -1,0 +1,19 @@
+[package]
+authors = ["King Claudy <clocloranely@hotmail.fr>"]
+name = "mootsewatcher"
+version = "0.1.0"
+
+[dependencies]
+clippy = "0.0.145"
+derive-new = "0.5.0"
+futures = "0.1.14"
+hyper = "0.11.1"
+notify-rust = "3.4.1"
+scraper = "0.4.0"
+select = "0.4.2"
+serde = "1.0.10"
+serde_derive = "1.0.10"
+systray = "0.2.0"
+tokio-core = "0.1.8"
+toml = "0.4.2"
+url = "1.5.1"
