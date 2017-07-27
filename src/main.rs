@@ -10,6 +10,7 @@ extern crate derive_new;
 extern crate hyper;
 extern crate futures;
 extern crate tokio_core;
+extern crate hyper_tls;
 
 pub mod watcher;
 
@@ -20,6 +21,7 @@ use std::fs::File;
 use hyper::{Client, Method, Request};
 use hyper::header::{Headers, ContentLength, ContentType};
 use hyper::header::SetCookie;
+use hyper_tls::HttpsConnector;
 use futures::{Stream, Future};
 use tokio_core::reactor::Core;
 use scraper::{Html, Selector};
@@ -47,10 +49,12 @@ fn credentials_login() -> Config {
     decoded
 }
 
+/// Retrieve a vector of numbers corresponding to the IDs of all the courses
 fn retreive_all_courses_id(c: Config) {
     // Login in using credentials
     let mut core = Core::new().unwrap();
-    let client = Client::new(&core.handle());
+    let handle = &core.handle();
+    let client = Client::configure().connector(HttpsConnector::new(4,&handle).unwrap()).build(&handle);
     let uri = format!("https://{}/{}", &c.base_uri, &c.login_uri).parse().unwrap();
     let mut req = Request::new(Method::Post, uri);
     let params = format!("username={}&password={}", &c.username, &c.password);
