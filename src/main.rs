@@ -14,18 +14,15 @@ extern crate hyper_tls;
 
 pub mod watcher;
 
-use std::io::{self, Write};
 use std::io::prelude::*;
 use std::io::BufReader;
 use std::fs::File;
 use hyper::{Client, Method, Request};
-use hyper::header::{Headers, ContentLength, ContentType};
 use hyper::header::SetCookie;
 use hyper_tls::HttpsConnector;
 use futures::{Stream, Future};
 use tokio_core::reactor::Core;
 use scraper::{Html, Selector};
-use url::form_urlencoded;
 use std::str;
 
 #[derive(Debug, Deserialize, new, Eq, PartialEq)]
@@ -57,23 +54,24 @@ fn retreive_all_courses_id(c: Config) {
     let client = Client::configure().connector(HttpsConnector::new(4,&handle).unwrap()).build(&handle);
     let uri = format!("https://{}/{}", &c.base_uri, &c.login_uri).parse().unwrap();
     let mut req = Request::new(Method::Post, uri);
-    let params = format!("username={}&password={}", &c.username, &c.password);
+    let params = format!("username={}&password={}&anchor=", &c.username, &c.password);
     req.set_body(params);
-    let cookie: &Vec<String> = &Vec::new();
+    let mut cookie: Vec<String> = Vec::new();
     let post_request = client.request(req).and_then(|res| {
         println!("POST : {}", res.status());
         if let Some(&SetCookie(ref content)) = res.headers().get() {
-            let mut cookie = &content.clone();
+            cookie = content.clone();
         }
         res.body().concat2()
     });
     let result_from_post = core.run(post_request).unwrap();
-    println!("Result : {}", str::from_utf8(&result_from_post).unwrap());
+    // println!("Result from post: {}", str::from_utf8(&result_from_post).unwrap());
 
     // Getting the page with the marks
     let mut req = Request::new(Method::Get,
                        format!("https://{}/{}", &c.base_uri, &c.grade_uri).parse().unwrap());
-    req.headers_mut().set(SetCookie(cookie.to_vec()));
+    let clone_cookie = cookie.clone();
+    req.headers_mut().set(SetCookie(clone_cookie));
     let get_request = client.request(req).and_then(|res| {
         println!("GET : {}", res.status());
         res.body().concat2()
@@ -82,6 +80,7 @@ fn retreive_all_courses_id(c: Config) {
     let html_page_content = str::from_utf8_mut(&mut result_from_get).unwrap();
     // Creating the parsed html page
     let html_page_content = Html::parse_document(&html_page_content);
+    println!("{:?}",html_page_content);
     // Create the parser
     let selector = Selector::parse("overview-grade").expect("Initializing the parsing failed");
 
