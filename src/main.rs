@@ -16,7 +16,8 @@ pub mod watcher;
 
 use std::io::prelude::*;
 use std::io::BufReader;
-use std::fs::File;
+use std::fs::File;use std::thread;
+use std::sync::mpsc::channel;
 use hyper::{Client, Method, Request};
 use hyper::header::SetCookie;
 use hyper_tls::HttpsConnector;
@@ -46,8 +47,7 @@ fn credentials_login() -> Config {
     decoded
 }
 
-/// Retrieve a vector of numbers corresponding to the IDs of all the courses
-fn retreive_all_courses_id(c: Config) {
+fn request_sequence(c: Config) -> Vec {
     // Login in using credentials
     let mut core = Core::new().unwrap();
     let handle = &core.handle();
@@ -77,21 +77,26 @@ fn retreive_all_courses_id(c: Config) {
         res.body().concat2()
     });
     let mut result_from_get = core.run(get_request).unwrap().to_vec();
+    result_from_get
+}
+
+/// Retrieve a vector of numbers corresponding to the IDs of all the courses
+fn retreive_all_courses_id(c: Config) {
+    let mut result_from_get = request_sequence(c);
     let html_page_content = str::from_utf8_mut(&mut result_from_get).unwrap();
     // Creating the parsed html page
     let html_page_content = Html::parse_document(&html_page_content);
     println!("{:?}",html_page_content);
     // Create the parser
     let selector = Selector::parse("overview-grade").expect("Initializing the parsing failed");
-
+    println!(" Parsed : {:?}", selector);
     // Parsing the html to find the table
     let grade_table = html_page_content.select(&selector)
         .collect::<Vec<_>>()
         .iter()
         .map(|&x| x.inner_html())
         .collect::<String>();
-    println!(" Parsed : {:?}", selector);
-
+    println!("{:?}", grade_table);
 }
 
 fn main() {
@@ -99,4 +104,15 @@ fn main() {
     retreive_all_courses_id(c);
     let coursesID : Vec<i32> = Vec::new(); // Array containing the courses ID
     // Obtaining all the courses
+
+    // Iterating through all the courses and  
+    for nc in coursesID {
+        // Spawn workers for each one of them
+        let worker = thread::spawn(move || {
+            watcher::new(nc, None, Some(3600));
+            watcher.run();
+        });
+    }
+    // Catch all the threads in case off crashing
+    let result = worker.join();
 }
