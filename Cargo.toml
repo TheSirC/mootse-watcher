@@ -4,7 +4,6 @@ name = "mootsewatcher"
 version = "0.1.0"
 
 [dependencies]
-clippy = "0.0.145"
 derive-new = "0.5.0"
 futures = "0.1.14"
 hyper = "0.11.1"

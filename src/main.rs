@@ -16,15 +16,18 @@ pub mod watcher;
 
 use std::io::prelude::*;
 use std::io::BufReader;
-use std::fs::File;use std::thread;
+use std::fs::File;
+use std::thread;
 use std::sync::mpsc::channel;
 use hyper::{Client, Method, Request};
-use hyper::header::{Headers,Cookie,SetCookie};
+use hyper::header::{Headers, Cookie, SetCookie};
 use hyper_tls::HttpsConnector;
 use futures::{Stream, Future};
+use futures::future::*;
 use tokio_core::reactor::Core;
 use scraper::{Html, Selector};
 use std::str;
+use watcher::*;
 
 #[derive(Debug, Deserialize, new, Eq, PartialEq)]
 pub struct Config {
@@ -47,7 +50,7 @@ fn credentials_login() -> Config {
     decoded
 }
 
-fn request_sequence(c: Config) -> Vec {
+fn request_sequence(c: Config) -> Vec<u8> {
     // Login in using credentials
     let mut core = Core::new().unwrap();
     let handle = &core.handle();
@@ -56,21 +59,22 @@ fn request_sequence(c: Config) -> Vec {
     let mut req = Request::new(Method::Post, uri);
     let params = format!("username={}&password={}&anchor=", &c.username, &c.password);
     req.set_body(params);
-    let mut cookie: Vec<String> = Vec::new();
-    let post_request = client.request(req).and_then(|res| {
+    let mut headers = Headers::new();
+    let post_request = client.request(req).map(|res| {
         println!("POST : {}", res.status());
         if let Some(&SetCookie(ref content)) = res.headers().get() {
-            cookie = content.clone();
+            headers.set(Cookie{content.clone()});
         }
-        res.body().concat2()
+        ok::<Headers,Headers>(headers)
     });
     let result_from_post = core.run(post_request).unwrap();
     // println!("Result from post: {}", str::from_utf8(&result_from_post).unwrap());
 
     // Getting the page with the marks
+    let cookie = Cookie::new();
     let mut req = Request::new(Method::Get,
                        format!("https://{}/{}", &c.base_uri, &c.grade_uri).parse().unwrap());
-    req.headers_mut().set(Cookie(cookie));
+    req.headers_mut().set(headers);
     let get_request = client.request(req).and_then(|res| {
         println!("GET : {}", res.status());
         res.body().concat2()
@@ -104,12 +108,12 @@ fn main() {
     let coursesID : Vec<i32> = Vec::new(); // Array containing the courses ID
     // Obtaining all the courses
 
-    // Iterating through all the courses and  
+    // Iterating through all the courses and
     for nc in coursesID {
-        // Spawn workers for each one of them
+    // Spawn workers for each one of them
         let worker = thread::spawn(move || {
-            watcher::new(nc, None, Some(3600));
-            watcher.run();
+            watcher::watcher::new(nc, None, Some(3600));
+            watcher::watcher.run();
         });
     }
     // Catch all the threads in case off crashing

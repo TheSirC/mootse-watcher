@@ -9,7 +9,7 @@ use std::time::Duration;
 #[derive(new)]
 pub struct watcher {
         courseID: i32,
-        grade: i16,
+        grade: Option<i16>,
         sleep_time: Option<u64>,
 }
 
@@ -22,9 +22,9 @@ impl watcher {
     fn check_grades(mut self) {
     // Check if the previous grade is different
         let new_grade = self.get_grade();
-        if self.grade != new_grade {
+        if self.grade != Some(new_grade) {
             self.notify_grade_change();
-            self.grade = new_grade;
+            self.grade = Some(new_grade);
         }
     }
     
@@ -38,7 +38,7 @@ impl watcher {
         
     }
     
-    fn run(mut self) {
+    pub fn run(mut self) {
     /* // Routine
         self.grade = self.get_grade(); // Store the first version of the grade at the start of the program
         loop {
