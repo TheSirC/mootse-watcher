@@ -16,7 +16,7 @@ use std::io::BufReader;
 use std::fs::File;
 use std::thread;
 use std::sync::mpsc::channel;
-use reqwest::header::{Headers, SetCookie};
+use reqwest::header::{Headers, Cookie, SetCookie};
 use scraper::{Html, Selector};
 use std::str;
 use watcher::*;
@@ -47,16 +47,30 @@ fn credentials_login() -> Config {
 fn request_sequence(c: Config) {
     // Login in using credentials
     let client = reqwest::Client::new().expect("Initialization of the client failed");
-    let uri : String = format!("https://{}/{}", &c.base_uri, &c.login_uri).parse().unwrap();
-    let params = [("username",&c.username),("password",&c.password)];
-    let post_request = client.post(&uri).expect("POST failed").form(&params).expect("Wraping of the forms parameters failed").send().expect("POST request failed to be sent");
-    let mut headers = Headers::new();
-    // headers.set(post_request.headers().get::<SetCookie>());
-    if let Some(content) = post_request.headers().get::<SetCookie>()  {
-        headers.set(content.clone())
+    let uri: String = format!("https://{}/{}", &c.base_uri, &c.login_uri).parse().unwrap();
+    let params = [("username", &c.username), ("password", &c.password)];
+    let post_request = client.post(&uri)
+        .expect("POST failed")
+        .form(&params)
+        .expect("Wraping of the forms parameters failed")
+        .send()
+        .expect("POST request failed to be sent");
+    let uri_grade: String = format!("https://{}/{}", &c.base_uri, &c.grade_uri).parse().unwrap();
+    let mut setcookie: Vec<String> = Vec::new();
+    if let Some(&SetCookie(content)) = post_request.headers().get::<SetCookie>() {
+        setcookie = content.clonpe();
     }
-
-    l
+    let mut headers = Headers::new();
+    let cookie = Cookie::new();
+    print!("{:?}", setcookie);
+    //  cookie.set(setcookie);
+    // headers.set(cookie);
+    // print!("{:?}",
+    // client.get(&uri_grade)
+    // .expect("GET request failed")
+    // .header(headers)
+    // .send()
+    // .expect("GET request failed to be sent"));
 }
 
 /// Retrieve a vector of numbers corresponding to the IDs of all the courses
