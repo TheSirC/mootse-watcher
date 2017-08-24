@@ -12,3 +12,5 @@
 **/*.rs.bk
 
 Config\.toml
+
+\.vscode/
