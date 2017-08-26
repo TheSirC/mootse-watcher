@@ -66,7 +66,7 @@ fn request_sequence(c: Config) -> String {
         setcookie = content.clone();
     }
     let mut headers = Headers::new();
-    headers.set(SetCookie(setcookie));
+    headers.set(Cookie(setcookie));
     let mut html_page_content = String::new();
     client
         .get(&uri_grade)
