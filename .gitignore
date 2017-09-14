@@ -12,5 +12,6 @@
 **/*.rs.bk
 
 Config\.toml
+Cargo\.lock
 
 \.vscode/
