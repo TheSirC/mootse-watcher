@@ -7,17 +7,17 @@ use std::time::Duration;
 ///
 ///
 #[derive(new)]
-pub struct watcher {
-    courseID: i32,
+pub struct Watcher {
+    course_id: i32,
     grade: Option<i16>,
     sleep_time: Option<u64>,
 }
 
-impl watcher {
+impl Watcher {
     /// Retrieve the grade for the given ID via HTML parsing
 
     fn get_grade(&self) -> i16 {
-      unimplemented!();
+        unimplemented!();
     }
 
     /// Check the grades
